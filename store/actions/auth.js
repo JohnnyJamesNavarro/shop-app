@@ -1,7 +1,15 @@
-export const SIGN_UP = "SIGN_UP";
-export const LOG_IN = "LOG_IN";
-
 import { API_KEY } from "../../firebase-key";
+import { AsyncStorage } from "react-native";
+
+export const AUTHENTICATE = "AUTHENTICATE";
+
+export const authenticate = (userId, token) => {
+  return {
+    type: AUTHENTICATE,
+    userId: userId,
+    token: token,
+  };
+};
 
 export const signUp = (email, password) => {
   return async (dispatch) => {
@@ -35,11 +43,14 @@ export const signUp = (email, password) => {
 
     const resData = await response.json();
 
-    dispatch({
-      type: SIGN_UP,
-      token: resData.idToken,
-      userId: resData.localId,
-    });
+    dispatch(authenticate(resData.localId, resData.idToken));
+
+    // This creates a Date object of the "future" taking the current time plus the time it takes for the token to expire.
+    const expirationDate = new Date(
+      new Date().getTime() + parseInt(resData.expiresIn) * 1000
+    );
+
+    saveDataLocally(resData.idToken, resData.localId, expirationDate);
   };
 };
 
@@ -77,6 +88,24 @@ export const logIn = (email, password) => {
 
     const resData = await response.json();
 
-    dispatch({ type: LOG_IN, token: resData.idToken, userId: resData.localId });
+    dispatch(authenticate(resData.localId, resData.idToken));
+
+    // This creates a Date object of the "future" taking the current time plus the time it takes for the token to expire.
+    const expirationDate = new Date(
+      new Date().getTime() + parseInt(resData.expiresIn) * 1000
+    );
+
+    saveDataLocally(resData.idToken, resData.localId, expirationDate);
   };
+};
+
+const saveDataLocally = (token, userId, expirationDate) => {
+  AsyncStorage.setItem(
+    "userData",
+    JSON.stringify({
+      token,
+      userId,
+      expirationDate: expirationDate.toISOString(),
+    })
+  );
 };
