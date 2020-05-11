@@ -1,14 +1,19 @@
 import { API_KEY } from "../../firebase-key";
 import { AsyncStorage } from "react-native";
 
+let timer;
+
 export const AUTHENTICATE = "AUTHENTICATE";
 export const LOG_OUT = "LOG_OUT";
 
-export const authenticate = (userId, token) => {
-  return {
-    type: AUTHENTICATE,
-    userId: userId,
-    token: token,
+export const authenticate = (userId, token, expirationDate) => {
+  return (dispatch) => {
+    dispatch(setLogOutTimer(expirationDate));
+    dispatch({
+      type: AUTHENTICATE,
+      userId: userId,
+      token: token,
+    });
   };
 };
 
@@ -44,7 +49,13 @@ export const signUp = (email, password) => {
 
     const resData = await response.json();
 
-    dispatch(authenticate(resData.localId, resData.idToken));
+    dispatch(
+      authenticate(
+        resData.localId,
+        resData.idToken,
+        parseInt(resData.expiresIn) * 1000
+      )
+    );
 
     // This creates a Date object of the "future" taking the current time plus the time it takes for the token to expire.
     const expirationDate = new Date(
@@ -89,7 +100,13 @@ export const logIn = (email, password) => {
 
     const resData = await response.json();
 
-    dispatch(authenticate(resData.localId, resData.idToken));
+    dispatch(
+      authenticate(
+        resData.localId,
+        resData.idToken,
+        parseInt(resData.expiresIn) * 1000
+      )
+    );
 
     // This creates a Date object of the "future" taking the current time plus the time it takes for the token to expire.
     const expirationDate = new Date(
@@ -101,9 +118,27 @@ export const logIn = (email, password) => {
 };
 
 export const logOut = () => {
+  // When logging out we remove any set timer and the local data.
+  clearLogOutTimer();
+  AsyncStorage.removeItem("userData");
+
   return {
     type: LOG_OUT,
   };
+};
+
+const setLogOutTimer = (expirationTime) => {
+  return (dispatch) => {
+    timer = setTimeout(() => {
+      dispatch(logOut());
+    }, expirationTime);
+  };
+};
+
+const clearLogOutTimer = () => {
+  if (timer) {
+    clearTimeout(timer);
+  }
 };
 
 const saveDataLocally = (token, userId, expirationDate) => {

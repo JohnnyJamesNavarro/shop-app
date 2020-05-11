@@ -10,7 +10,7 @@ import cartReducer from "./store/reducers/cart";
 import orderReducer from "./store/reducers/order";
 import authReducer from "./store/reducers/auth";
 
-import ShopNavigator from "./navigation/ShopNavigator";
+import NavigationContainer from "./navigation/NavigationContainer";
 
 const rootReducer = combineReducers({
   products: productsReducer,
@@ -43,7 +43,8 @@ export default function App() {
   }
   return (
     <Provider store={store}>
-      <ShopNavigator />
+      {/* We had to create a component to wrap the Navigator because we needed access to Redux. */}
+      <NavigationContainer />
     </Provider>
   );
 }
