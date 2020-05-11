@@ -2,6 +2,7 @@ import { API_KEY } from "../../firebase-key";
 import { AsyncStorage } from "react-native";
 
 export const AUTHENTICATE = "AUTHENTICATE";
+export const LOG_OUT = "LOG_OUT";
 
 export const authenticate = (userId, token) => {
   return {
@@ -96,6 +97,12 @@ export const logIn = (email, password) => {
     );
 
     saveDataLocally(resData.idToken, resData.localId, expirationDate);
+  };
+};
+
+export const logOut = () => {
+  return {
+    type: LOG_OUT,
   };
 };
 
